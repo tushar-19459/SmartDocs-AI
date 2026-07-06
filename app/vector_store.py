@@ -106,46 +106,43 @@ def search(query_embedding, k=5):
         n_results=k
     )
 
-def HybridSearch(query, query_embedding, k=5):
+def HybridSearch(query, query_embedding, k=5, fetch_k=20):
     """
-    Hybrid Search using:
-    1. BM25 (keyword search)
-    2. ChromaDB (semantic search)
-
-    Results are fused using Reciprocal Rank Fusion (RRF).
+    Hybrid Retrieval using BM25 + Semantic Search
+    with Reciprocal Rank Fusion (RRF).
     """
 
-    # -------------------------------
-    # BM25 Results
-    # -------------------------------
-    bm25_results = BM25Search(query, k)
+    # -----------------------------
+    # Retrieve more candidates
+    # -----------------------------
+    bm25_results = BM25Search(query, fetch_k)
 
-    # -------------------------------
-    # Semantic Results
-    # -------------------------------
     semantic_results = search(
         query_embedding,
-        k
+        fetch_k
     )
 
     fusion = {}
 
     RRF_K = 60
 
-    # -------------------------------------------------
-    # BM25 contribution
-    # -------------------------------------------------
-    for rank, (score, chunk_id, document, metadata) in enumerate(bm25_results):
+    # ===================================================
+    # BM25 Contribution
+    # ===================================================
+    for rank, (bm_score, chunk_id, document, metadata) in enumerate(bm25_results):
 
         fusion[chunk_id] = {
-            "score": 1 / (RRF_K + rank + 1),
+            "fusion_score": 1 / (RRF_K + rank + 1),
+            "bm25_rank": rank + 1,
+            "semantic_rank": None,
+            "bm25_score": bm_score,
             "document": document,
             "metadata": metadata
         }
 
-    # -------------------------------------------------
-    # Semantic contribution
-    # -------------------------------------------------
+    # ===================================================
+    # Semantic Contribution
+    # ===================================================
     for rank, (
         chunk_id,
         document,
@@ -161,19 +158,25 @@ def HybridSearch(query, query_embedding, k=5):
         if chunk_id not in fusion:
 
             fusion[chunk_id] = {
-                "score": 0,
+                "fusion_score": 0,
+                "bm25_rank": None,
+                "semantic_rank": rank + 1,
+                "bm25_score": None,
                 "document": document,
                 "metadata": metadata
             }
 
-        fusion[chunk_id]["score"] += 1 / (RRF_K + rank + 1)
+        else:
+            fusion[chunk_id]["semantic_rank"] = rank + 1
 
-    # -------------------------------------------------
+        fusion[chunk_id]["fusion_score"] += 1 / (RRF_K + rank + 1)
+
+    # ===================================================
     # Final Ranking
-    # -------------------------------------------------
+    # ===================================================
     ranked = sorted(
         fusion.items(),
-        key=lambda x: x[1]["score"],
+        key=lambda x: x[1]["fusion_score"],
         reverse=True
     )
 

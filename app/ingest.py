@@ -1,5 +1,4 @@
 import uuid
-
 import fitz
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -12,6 +11,11 @@ from config import (
 from embeddings import get_embedding
 
 from vector_store import add_chunks
+
+from document_profiler import (
+    build_document_profile,
+    save_profile
+)
 
 
 def load_pdf(pdf_path):
@@ -30,6 +34,8 @@ def load_pdf(pdf_path):
                 "text": text
             }
         )
+
+    doc.close()
 
     return pages
 
@@ -65,9 +71,45 @@ def chunk_document(pages):
 
 def ingest(pdf_path):
 
+    print("Loading PDF...")
+
     pages = load_pdf(pdf_path)
 
+    print(f"Loaded {len(pages)} pages")
+
+    # --------------------------------------
+    # Chunk the document
+    # --------------------------------------
+
+    print("Creating chunks...")
+
     chunks = chunk_document(pages)
+
+    print(f"Created {len(chunks)} chunks")
+
+    # --------------------------------------
+    # Build Knowledge Profile
+    # --------------------------------------
+
+    print("Building knowledge profile...")
+
+    profile = build_document_profile(
+        chunks,
+        sample_size=30
+    )
+
+    save_profile(
+        profile,
+        "../knowledge_base/customer_support_profile.json"
+    )
+
+    print("Knowledge profile saved.")
+
+    # --------------------------------------
+    # Generate embeddings
+    # --------------------------------------
+
+    print("Generating embeddings...")
 
     ids = []
 
@@ -94,6 +136,12 @@ def ingest(pdf_path):
             }
         )
 
+    # --------------------------------------
+    # Store in ChromaDB
+    # --------------------------------------
+
+    print("Storing vectors in ChromaDB...")
+
     add_chunks(
         ids,
         documents,
@@ -101,4 +149,4 @@ def ingest(pdf_path):
         metadatas
     )
 
-    print(f"Stored {len(chunks)} chunks")
+    print(f"\nSuccessfully stored {len(chunks)} chunks.")

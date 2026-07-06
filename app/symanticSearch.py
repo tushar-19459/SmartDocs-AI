@@ -1,24 +1,33 @@
 from embeddings import get_embedding
-
 from vector_store import search
+from query_rewriter import rewrite_query
 
 question = "my car is not starting"
 
-embedding = get_embedding(question)
+# Generate rewritten queries
+queries = rewrite_query(question)
 
-results = search(embedding)
+for i, query in enumerate(queries, start=1):
 
-for doc, meta in zip(
-    results["documents"][0],
-    results["metadatas"][0]
-):
+    print("=" * 80)
+    print(f"Query {i}: {query}")
+    print("=" * 80)
 
-    print("-" * 50)
+    embedding = get_embedding(query)
 
-    print(meta)
+    results = search(
+        embedding,
+        k=5
+    )
 
-    print(doc)
-
+    for doc, meta in zip(
+        results["documents"][0],
+        results["metadatas"][0]
+    ):
+        print("-" * 50)
+        print(meta)
+        print(doc)
+        
 # import fitz
 # from langchain_text_splitters import RecursiveCharacterTextSplitter
 # from sentence_transformers import SentenceTransformer

@@ -1,22 +1,30 @@
 from embeddings import get_embedding
-from vector_store import HybridSearch
+from vector_store import search
+from query_rewriter import rewrite_query
 
 question = "my car is not starting"
+profile_path="../knowledge_base/customer_support_profile.json"
 
-embedding = get_embedding(question)
+# Generate rewritten queries
+queries = rewrite_query(question,profile_path)
 
-results = HybridSearch(
-    question,
-    embedding,
-    k=5
-)
+for i, query in enumerate(queries, start=1):
 
-for chunk_id, item in results:
+    print("=" * 80)
+    print(f"Query {i}: {query}")
+    print("=" * 80)
 
-    print("-" * 60)
+    embedding = get_embedding(query)
 
-    print("Fusion Score :", round(item["score"], 4))
-    print("Chunk ID     :", chunk_id)
-    print("Metadata     :", item["metadata"])
+    results = search(
+        embedding,
+        k=5
+    )
 
-    print(item["document"])
+    for doc, meta in zip(
+        results["documents"][0],
+        results["metadatas"][0]
+    ):
+        print("-" * 50)
+        print(meta)
+        print(doc)
