@@ -1,0 +1,30 @@
+# Core RAG
+chromadb
+sentence-transformers
+langchain-text-splitters
+
+# PDF Processing
+pymupdf
+pypdf
+
+# Data Processing
+pandas
+numpy
+
+# Jupyter
+jupyter
+ipykernel
+ipywidgets
+
+# Environment Variables
+python-dotenv
+
+# LLM
+google-generativeai
+
+# Utilities
+tqdm
+
+rank-bm25
+
+nltk
