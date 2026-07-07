@@ -1,30 +1,79 @@
 from embeddings import get_embedding
 from vector_store import search
 from query_rewriter import rewrite_query
+from generator import generate_answer
 
-question = "my car is not starting"
-profile_path="../knowledge_base/customer_support_profile.json"
+profile_path = "../knowledge_base/customer_support_profile.json"
 
-# Generate rewritten queries
-queries = rewrite_query(question,profile_path)
+questions = [
+    "my car is not starting",
+    "the car is overheating",
+    "Vehicle will not restart",
+    "Low voltage battery alert",
+    "Power cycling vehicle",
+    "Jump starting low voltage battery"
+]
 
-for i, query in enumerate(queries, start=1):
+for question in questions:
 
-    print("=" * 80)
-    print(f"Query {i}: {query}")
-    print("=" * 80)
+    print("\n" + "=" * 100)
+    print(f"QUESTION: {question}")
+    print("=" * 100)
 
-    embedding = get_embedding(query)
+    # ------------------------------------------
+    # Rewrite the user's question
+    # ------------------------------------------
+    queries = rewrite_query(question, profile_path)
 
-    results = search(
-        embedding,
-        k=5
+    print("\nRewritten Queries:")
+    for q in queries:
+        print(f" - {q}")
+
+    retrieved_chunks = []
+    seen = set()
+
+    # ------------------------------------------
+    # Retrieve documents for every rewritten query
+    # ------------------------------------------
+    for query in queries:
+
+        embedding = get_embedding(query)
+
+        results = search(
+            embedding,
+            k=5
+        )
+
+        for doc, meta in zip(
+            results["documents"][0],
+            results["metadatas"][0]
+        ):
+
+            key = (meta["page"], doc)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            retrieved_chunks.append(
+                {
+                    "document": doc,
+                    "metadata": meta
+                }
+            )
+
+    # ------------------------------------------
+    # Generate final answer
+    # ------------------------------------------
+    print("\nRetrieved Chunks:", len(retrieved_chunks))
+
+    answer = generate_answer(
+        question,
+        retrieved_chunks
     )
 
-    for doc, meta in zip(
-        results["documents"][0],
-        results["metadatas"][0]
-    ):
-        print("-" * 50)
-        print(meta)
-        print(doc)
+    print("\nAnswer:")
+    print(answer)
+
+    print("\n" + "-" * 100)
