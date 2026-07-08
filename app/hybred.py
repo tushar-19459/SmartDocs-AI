@@ -4,6 +4,8 @@ from query_rewriter import rewrite_query
 from reranker import rerank
 from generator import generate_answer
 
+#testing symantic searching 
+
 profile_path = "../knowledge_base/customer_support_profile.json"
 
 questions = [
@@ -98,4 +100,4 @@ for question in questions:
     print("\nAnswer:\n")
     print(answer)
 
-    print("\n" + "-" * 100)
+    print("\n" + "-" * 100) 
