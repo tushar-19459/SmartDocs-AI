@@ -1,6 +1,7 @@
 from embeddings import get_embedding
 from vector_store import search
 from query_rewriter import rewrite_query
+from reranker import rerank
 from generator import generate_answer
 
 profile_path = "../knowledge_base/customer_support_profile.json"
@@ -20,9 +21,9 @@ for question in questions:
     print(f"QUESTION: {question}")
     print("=" * 100)
 
-    # ------------------------------------------
-    # Rewrite the user's question
-    # ------------------------------------------
+    # ---------------------------------------------------
+    # Rewrite Query
+    # ---------------------------------------------------
     queries = rewrite_query(question, profile_path)
 
     print("\nRewritten Queries:")
@@ -32,9 +33,9 @@ for question in questions:
     retrieved_chunks = []
     seen = set()
 
-    # ------------------------------------------
+    # ---------------------------------------------------
     # Retrieve documents for every rewritten query
-    # ------------------------------------------
+    # ---------------------------------------------------
     for query in queries:
 
         embedding = get_embedding(query)
@@ -63,17 +64,38 @@ for question in questions:
                 }
             )
 
-    # ------------------------------------------
-    # Generate final answer
-    # ------------------------------------------
-    print("\nRetrieved Chunks:", len(retrieved_chunks))
+    print(f"\nRetrieved Chunks: {len(retrieved_chunks)}")
 
-    answer = generate_answer(
+    # ---------------------------------------------------
+    # Rerank
+    # ---------------------------------------------------
+    reranked_chunks = rerank(
         question,
-        retrieved_chunks
+        retrieved_chunks,
+        top_k=5
     )
 
-    print("\nAnswer:")
+    print(f"After Reranking: {len(reranked_chunks)}")
+
+    print("\nTop Retrieved Chunks:\n")
+
+    for i, chunk in enumerate(reranked_chunks, start=1):
+
+        print("-" * 80)
+        print(f"Rank : {i}")
+        print(f"Score: {chunk['score']:.4f}")
+        print(chunk["metadata"])
+        print(chunk["document"][:400])
+
+    # ---------------------------------------------------
+    # Generate Answer
+    # ---------------------------------------------------
+    answer = generate_answer(
+        question,
+        reranked_chunks
+    )
+
+    print("\nAnswer:\n")
     print(answer)
 
     print("\n" + "-" * 100)
