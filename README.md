@@ -1,125 +1,197 @@
-# Retrieval-Augmented Generation (RAG) Customer Support System
+# Hybrid Retrieval-Augmented Generation (RAG) System
 
-A Retrieval-Augmented Generation (RAG) pipeline built using ChromaDB, Sentence Transformers, BM25, Groq LLMs, and Cross-Encoder reranking to answer customer support questions from PDF documentation.
-
-The system combines semantic search, keyword search, LLM-powered query rewriting, reranking, and answer generation to improve retrieval quality over traditional vector search.
+A production-style Retrieval-Augmented Generation (RAG) pipeline that combines keyword search, semantic search, query rewriting, reranking, and LLM-based answer generation to provide accurate responses from large PDF documents.
 
 ---
 
 ## Features
 
-- PDF document ingestion
-- Recursive document chunking
-- Dense embeddings using BAAI BGE models
-- ChromaDB vector database
+- PDF ingestion and intelligent text chunking
+- Dense vector embeddings using Sentence Transformers
+- ChromaDB vector database for semantic retrieval
 - BM25 keyword retrieval
-- Hybrid Retrieval (Semantic + BM25)
-- Reciprocal Rank Fusion (RRF)
-- LLM-based Query Rewriting
-- Knowledge Base Profile Generation
-- Cross-Encoder Reranking
-- LLM-based Answer Generation
-- Metadata preservation (page number & source)
+- Hybrid Retrieval using Reciprocal Rank Fusion (RRF)
+- LLM-powered query rewriting using Groq (Llama 3.3 70B)
+- Cross-Encoder reranking for relevance optimization
+- Context-aware answer generation using Groq LLM
+- Automatic document knowledge profile generation
 
 ---
 
-## Tech Stack
+## Pipeline
+
+```
+                    PDF Document
+                         │
+                         ▼
+                 PDF Text Extraction
+                         │
+                         ▼
+                  Document Chunking
+                         │
+                         ▼
+              Generate Dense Embeddings
+                         │
+                         ▼
+            Store in Chroma Vector Database
+                         │
+         ┌───────────────┴────────────────┐
+         │                                │
+         ▼                                ▼
+     BM25 Index                    Vector Database
+         │                                │
+         └───────────────┬────────────────┘
+                         │
+
+=============================================================
+
+                    User Question
+                         │
+                         ▼
+                Query Rewriting (Groq)
+                         │
+          Multiple Optimized Search Queries
+                         │
+                         ▼
+              Hybrid Retrieval (BM25 + Vector)
+                         │
+                         ▼
+          Reciprocal Rank Fusion (RRF)
+                         │
+                         ▼
+             Candidate Document Chunks
+                         │
+                         ▼
+           Cross-Encoder Reranking
+                         │
+                         ▼
+               Top Relevant Chunks
+                         │
+                         ▼
+          Answer Generation (Groq LLM)
+                         │
+                         ▼
+                  Final Response
+```
+
+---
+
+## Technologies Used
 
 - Python
 - ChromaDB
 - Sentence Transformers
-- BAAI/bge-base-en-v1.5
-- LangChain Text Splitters
-- BM25 (rank_bm25)
-- Groq API
-- Llama 3.3 70B
-- Cross Encoder (BAAI/bge-reranker-base)
+- Rank-BM25
+- Cross-Encoder (MS MARCO)
+- LangChain Text Splitter
+- PyMuPDF
+- Groq API (Llama 3.3 70B)
 
 ---
 
 ## Project Structure
 
 ```
-rag-project/
+app/
 │
-├── app/
-│   ├── ingest.py
-│   ├── vector_store.py
-│   ├── embeddings.py
-│   ├── query_rewriter.py
-│   ├── reranker.py
-│   ├── generator.py
-│   ├── search.py
-│   ├── hybrid.py
-│   └── config.py
-│
-├── chroma_db/
-│
-├── data/
-│   └── tesla.pdf
-│
-├── knowledge_base/
-│   └── customer_support_profile.json
-│
-├── requirements.txt
-└── README.md
+├── ingest.py
+├── vector_store.py
+├── embeddings.py
+├── bm25.py
+├── hybrid.py
+├── reranker.py
+├── query_rewriter.py
+├── generator.py
+├── profile_builder.py
+├── config.py
+└── main.py
+
+knowledge_base/
+└── customer_support_profile.json
+
+data/
+└── tesla.pdf
 ```
 
 ---
 
-# Pipeline
+## Retrieval Pipeline
+
+### 1. Query Rewriting
+
+The user's query is rewritten into multiple semantically related search queries using Groq Llama 3.3.
+
+Example:
 
 ```
-                PDF Document
-                      │
-                      ▼
-              PDF Text Extraction
-                      │
-                      ▼
-              Recursive Chunking
-                      │
-                      ▼
-              Generate Embeddings
-                      │
-                      ▼
-               Store in ChromaDB
-                      │
-                      │
-────────────────────────────────────────────────────────
+User:
+my car is not starting
 
-                 User Question
-                      │
-                      ▼
-           Query Rewriting (Groq LLM)
-                      │
-                      ▼
-          Multiple Search Queries
-                      │
-                      ▼
-        Dense Semantic Retrieval
-             (ChromaDB Search)
-                      │
-                      ▼
-           Collect Candidate Chunks
-                      │
-                      ▼
-        Cross Encoder Reranking
-                      │
-                      ▼
-         Top Ranked Relevant Chunks
-                      │
-                      ▼
-      Answer Generation (Groq LLM)
-                      │
-                      ▼
-              Final Response
+↓
+
+my car is not starting
+Vehicle Not Starting
+Tesla Not Turning On
+Vehicle Start Failure
+Car Won't Start Error
+Troubleshooting Start Issue
 ```
+
+This improves recall by searching the document using multiple formulations of the same intent.
 
 ---
 
-# Knowledge Base Profiling
+### 2. Hybrid Retrieval
 
-During ingestion, the first few document chunks are analyzed using an LLM to automatically create a knowledge profile containing:
+For each rewritten query:
+
+- Retrieve Top 20 documents using BM25
+- Retrieve Top 20 documents using Semantic Search
+- Merge both rankings using Reciprocal Rank Fusion (RRF)
+- Return the Top 10 fused candidates
+
+Hybrid retrieval combines the strengths of lexical matching and semantic understanding.
+
+---
+
+### 3. Reciprocal Rank Fusion (RRF)
+
+BM25 and Semantic Search produce independent ranked lists.
+
+RRF combines these rankings using:
+
+```
+RRF Score = Σ 1 / (k + rank)
+```
+
+where:
+
+- **rank** = document position in a retrieval list
+- **k = 60** (standard smoothing constant)
+
+RRF rewards documents that consistently rank highly across multiple retrieval methods without requiring score normalization.
+
+---
+
+### 4. Cross-Encoder Reranking
+
+Candidate chunks are reranked using the **cross-encoder/ms-marco-MiniLM-L-6-v2** model.
+
+Unlike embedding similarity, the Cross-Encoder jointly processes the question and document, producing a relevance score for each pair.
+
+Only the highest-ranked chunks are passed to the LLM.
+
+---
+
+### 5. Answer Generation
+
+The reranked document chunks are provided to the Groq-hosted Llama 3.3 model, which generates an answer grounded only in the retrieved context.
+
+---
+
+## Document Profiling
+
+During ingestion, the system automatically creates a knowledge profile containing:
 
 - Document title
 - Domain
@@ -127,192 +199,44 @@ During ingestion, the first few document chunks are analyzed using an LLM to aut
 - Topics
 - Technical terminology
 
-This profile is later used to rewrite user queries into domain-specific search queries, improving retrieval performance.
-
-Example:
-
-```json
-{
-    "title": "Model 3 Owner's Manual",
-    "domain": "Electric Vehicles",
-    "summary": "...",
-    "topics": [
-        "Vehicle Operation",
-        "Safety",
-        "Charging"
-    ],
-    "terminology": [
-        "Supercharger",
-        "Autopilot",
-        "Low Voltage Battery",
-        "Thermal Management",
-        "Regenerative Braking"
-    ]
-}
-```
+The profile guides query rewriting, allowing the LLM to generate search queries using terminology specific to the knowledge base.
 
 ---
 
-# Retrieval Pipeline
+## Future Improvements
 
-Instead of searching only the original user query:
-
-```
-"My car is not starting"
-```
-
-the system first rewrites it into multiple search queries:
-
-```
-My car is not starting
-Vehicle Not Starting
-Tesla Not Turning On
-Car Won't Start Error
-Troubleshooting Start Issue
-Battery Not Charging
-```
-
-Each rewritten query retrieves the top semantic matches from ChromaDB.
-
-Duplicate chunks are removed before reranking.
-
----
-
-# Cross Encoder Reranking
-
-The retrieved chunks are reranked using the BAAI Cross Encoder:
-
-```
-Question + Chunk
-        │
-        ▼
-Relevance Score
-```
-
-Unlike embedding similarity, the Cross Encoder jointly processes the query and document, producing a more accurate relevance score.
-
-Only the highest-ranked chunks are passed to the language model.
-
----
-
-# Answer Generation
-
-The final response is generated using Groq's Llama 3.3 70B model.
-
-The model is instructed to:
-
-- Answer only using the retrieved context
-- Cite page numbers when appropriate
-- Avoid hallucinations
-- State when the answer is unavailable in the provided documentation
-
----
-
-# Example Workflow
-
-User Question:
-
-```
-How do I jump start the low voltage battery?
-```
-
-Pipeline:
-
-```
-Question
-    ↓
-Rewrite Query
-    ↓
-Semantic Retrieval
-    ↓
-Deduplicate Chunks
-    ↓
-Cross Encoder Reranking
-    ↓
-Top Relevant Chunks
-    ↓
-Groq LLM
-    ↓
-Final Answer
-```
-
----
-
-# Future Improvements
-
-- Hybrid Search (BM25 + Semantic Retrieval)
-- Reciprocal Rank Fusion (RRF)
-- Multi-query Retrieval
-- Metadata Filtering
+- Hybrid retrieval with weighted RRF
 - Parent-Child Retrieval
-- Context Compression
-- Multi-document Support
-- Streaming Responses
-- Conversation Memory
-- Evaluation using RAGAS
-- FAISS Backend Support
-- REST API with FastAPI
-- Docker Deployment
+- Multi-query parallel retrieval
+- Metadata filtering
+- Multi-document support
+- Citation-aware responses
+- Streaming responses
+- Conversation memory
+- Evaluation pipeline (Recall@K, MRR, nDCG)
 
 ---
 
-# Installation
+## Example Applications
 
-Clone the repository:
-
-```bash
-git clone <repository-url>
-cd rag-project
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Create a `.env` file:
-
-```env
-GROQ_API_KEY=your_api_key_here
-```
+- Customer Support Assistants
+- Technical Documentation Search
+- Enterprise Knowledge Bases
+- Internal Company Documentation
+- Product Manuals
+- IT Help Desk Systems
 
 ---
 
-# Run
+## Key Concepts
 
-Ingest documents:
-
-```bash
-python ingest.py
-```
-
-Run retrieval:
-
-```bash
-python search.py
-```
-
-Run the complete RAG pipeline:
-
-```bash
-python main.py
-```
-
----
-
-# Learning Outcomes
-
-This project demonstrates practical implementation of modern Retrieval-Augmented Generation techniques, including:
-
-- Dense Vector Retrieval
-- Sentence Embeddings
-- ChromaDB
+- Retrieval-Augmented Generation (RAG)
+- Hybrid Search
+- Semantic Search
 - BM25
-- Reciprocal Rank Fusion
-- Query Expansion using LLMs
-- Cross Encoder Reranking
-- Prompt Engineering
-- Knowledge Base Profiling
-- Large Language Model Integration
-- End-to-End RAG Pipeline Design
+- Reciprocal Rank Fusion (RRF)
+- Cross-Encoder Reranking
+- Query Rewriting
+- Dense Vector Embeddings
+- ChromaDB
+- Large Language Models (LLMs)
