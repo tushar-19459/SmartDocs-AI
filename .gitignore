@@ -1,2 +1,2 @@
 app/config.py
-app/.env
+app/*.env

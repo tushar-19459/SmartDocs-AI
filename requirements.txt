@@ -34,3 +34,5 @@ groq
 loader
 
 langgraph
+
+langchain-groq
