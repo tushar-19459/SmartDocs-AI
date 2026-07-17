@@ -32,3 +32,5 @@ nltk
 groq
 
 loader
+
+langgraph
