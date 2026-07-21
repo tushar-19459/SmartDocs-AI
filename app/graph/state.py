@@ -4,14 +4,17 @@ from langchain_core.messages import BaseMessage
 
 
 class AgentState(TypedDict):
+
     messages: Annotated[list[BaseMessage], add_messages]
 
     question: str
 
-    route: str
-
     answer: str
+
+    route: str
 
     queries: list
 
     sources: list
+
+    search_results: dict

@@ -1,4 +1,5 @@
 from graph.graph import graph
+from langchain_core.messages import HumanMessage
 
 config = {
     "configurable": {
@@ -15,7 +16,10 @@ while True:
 
     result = graph.invoke(
         {
-            "question": question
+            "question": question,
+            "messages": [
+                HumanMessage(content=question)
+            ]
         },
         config=config
     )

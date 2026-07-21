@@ -1,6 +1,7 @@
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_groq import ChatGroq
 
+from tools.web_tool import web_tool
 from config import GROQ_API_KEY
 from tools.rag_tool import rag_tool
 
@@ -11,8 +12,11 @@ llm = ChatGroq(
     temperature=0
 )
 
-
 def rag_node(state):
+    """
+    Executes the RAG pipeline.
+    """
+
     result = rag_tool(state["question"])
 
     return {
@@ -26,11 +30,12 @@ def rag_node(state):
 
 
 def direct_node(state):
-    response = llm.invoke(
-        [
-            HumanMessage(content=state["question"])
-        ]
-    )
+    """
+    Uses the conversation history for normal chat.
+    """
+
+    # Use the accumulated conversation history
+    response = llm.invoke(state["messages"])
 
     return {
         "answer": response.content,
@@ -41,9 +46,17 @@ def direct_node(state):
 
 
 def web_node(state):
+    """
+    Executes a web search.
+    """
+
+    result = web_tool(state["question"])
+
     return {
-        "answer": "Web search not implemented yet.",
+        "answer": result["answer"],
+        "sources": result["sources"],
+        "search_results": result["search_results"],   # We'll use this later
         "messages": [
-            AIMessage(content="Web search not implemented yet.")
+            AIMessage(content=result["answer"])
         ]
     }
