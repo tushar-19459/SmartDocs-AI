@@ -3,11 +3,11 @@ from vector_store import HybridSearch
 from query_rewriter import rewrite_query
 from reranker import rerank
 from generator import generate_answer
-
+from langchain_core.messages import HumanMessage, AIMessage
 PROFILE_PATH = "../knowledge_base/customer_support_profile.json"
 
 
-def rag_tool(question: str):
+def rag_tool(question: str, messages=None):
     """
     Complete RAG pipeline.
 
@@ -23,7 +23,13 @@ def rag_tool(question: str):
     # ---------------------------------------------------
     # Rewrite Query
     # ---------------------------------------------------
-    queries = rewrite_query(question, PROFILE_PATH)
+    history = format_chat_history(messages or [])
+    
+    queries = rewrite_query(
+        question=question,
+        profile_path=PROFILE_PATH,
+        history=history
+    )
 
     retrieved_chunks = []
     seen = set()
@@ -87,3 +93,28 @@ def rag_tool(question: str):
         "answer": answer,
         "sources": reranked_chunks
     }
+
+
+def format_chat_history(messages, max_turns=4):
+    """
+    Convert the last few conversation turns into text.
+    Keeps the prompt small while preserving context.
+    """
+
+    if not messages:
+        return ""
+
+    # Only keep the last few messages
+    recent_messages = messages[-max_turns:]
+
+    history = []
+
+    for message in recent_messages:
+
+        if isinstance(message, HumanMessage):
+            history.append(f"User: {message.content}")
+
+        elif isinstance(message, AIMessage):
+            history.append(f"Assistant: {message.content}")
+
+    return "\n".join(history)

@@ -29,10 +29,14 @@ Instructions:
 - Do NOT answer the question.
 - Return ONLY the queries.
 - One query per line.
+- Use conversation history only when needed.
+- Resolve pronouns such as "it", "this", "that", "they".
+- Rewrite follow-up questions into standalone search queries.
+- Ignore the conversation history if the question is already complete.
 """
 
 
-def rewrite_query(question, profile_path="../knowledge_base/customer_support_profile.json"):
+def rewrite_query(question, profile_path="../knowledge_base/customer_support_profile.json",history=""):
 
     # -----------------------------
     # Load profile
@@ -77,14 +81,24 @@ def rewrite_query(question, profile_path="../knowledge_base/customer_support_pro
             {
                 "role": "user",
                 "content": f"""
-Knowledge Base Profile:
+                Knowledge Base Profile:
 
-{profile_text}
+                {profile_text}
 
-User Question:
+                Conversation History:
 
-{question}
-"""
+                {history}
+
+                Current User Question:
+
+                {question}
+
+                If the current question refers to previous conversation
+                (using words like "it", "this", "that", "they", etc.),
+                rewrite it into standalone search queries.
+
+                Otherwise ignore the conversation history.
+                """
             }
         ]
     )
