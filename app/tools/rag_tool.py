@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 PROFILE_PATH = "../knowledge_base/customer_support_profile.json"
 
 
-def rag_tool(question: str, messages=None):
+def rag_tool(question: str, messages=None, retry_count=0):
     """
     Complete RAG pipeline.
 
@@ -24,7 +24,7 @@ def rag_tool(question: str, messages=None):
     # Rewrite Query
     # ---------------------------------------------------
     history = format_chat_history(messages or [])
-    
+
     queries = rewrite_query(
         question=question,
         profile_path=PROFILE_PATH,
@@ -40,12 +40,13 @@ def rag_tool(question: str, messages=None):
     for query in queries:
 
         embedding = get_embedding(query)
+        fetch_k = 20 + (retry_count * 20)
 
         results = HybridSearch(
             query=query,
             query_embedding=embedding,
             k=10,
-            fetch_k=20
+            fetch_k=fetch_k
         )
 
         for chunk_id, item in results:

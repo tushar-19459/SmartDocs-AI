@@ -15,13 +15,15 @@ while True:
         break
 
     result = graph.invoke(
-        {
-            "question": question,
-            "messages": [
-                HumanMessage(content=question)
-            ]
-        },
-        config=config
+    {
+        "question": question,
+        "messages": [
+            HumanMessage(content=question)
+        ],
+        "retry_count": 0,
+        "max_retries": 2
+    },
+    config=config
     )
 
     print("\nAssistant:\n")

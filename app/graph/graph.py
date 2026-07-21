@@ -8,6 +8,7 @@ from graph.nodes import (
     direct_node,
     web_node,
 )
+from graph.reflection import reflection_node
 
 # ----------------------------------------------------
 # Build Graph
@@ -20,6 +21,7 @@ builder.add_node("router", route_question)
 builder.add_node("direct", direct_node)
 builder.add_node("rag", rag_node)
 builder.add_node("web", web_node)
+builder.add_node("reflection", reflection_node)
 
 # ----------------------------------------------------
 # Graph Flow
@@ -30,7 +32,7 @@ builder.add_edge(START, "router")
 
 def route(state: AgentState):
     """
-    Returns the next node to execute.
+    Decide which node to execute after routing.
     """
     return state["route"]
 
@@ -45,9 +47,35 @@ builder.add_conditional_edges(
     },
 )
 
+# ----------------------------------------------------
+# Direct and Web finish immediately
+# ----------------------------------------------------
+
 builder.add_edge("direct", END)
-builder.add_edge("rag", END)
 builder.add_edge("web", END)
+
+# ----------------------------------------------------
+# RAG -> Reflection
+# ----------------------------------------------------
+
+builder.add_edge("rag", "reflection")
+
+
+def reflection_route(state: AgentState):
+    """
+    Decide whether to retry RAG or finish.
+    """
+    return state["reflection"]
+
+
+builder.add_conditional_edges(
+    "reflection",
+    reflection_route,
+    {
+        "good": END,
+        "retry": "rag",
+    },
+)
 
 # ----------------------------------------------------
 # Memory
