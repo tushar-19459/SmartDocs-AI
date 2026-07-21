@@ -45,18 +45,21 @@ def direct_node(state):
     }
 
 
+
 def web_node(state):
-    """
-    Executes a web search.
-    """
 
     result = web_tool(state["question"])
 
+    answer = (
+        "[Fallback: Web Search]\n\n"
+        + result["answer"]
+    )
+
     return {
-        "answer": result["answer"],
+        "answer": answer,
         "sources": result["sources"],
-        "search_results": result["search_results"],   # We'll use this later
+        "search_results": result["search_results"],
         "messages": [
-            AIMessage(content=result["answer"])
+            AIMessage(content=answer)
         ]
     }

@@ -61,10 +61,7 @@ builder.add_edge("web", END)
 builder.add_edge("rag", "reflection")
 
 
-def reflection_route(state: AgentState):
-    """
-    Decide whether to retry RAG or finish.
-    """
+def reflection_route(state):
     return state["reflection"]
 
 
@@ -74,8 +71,11 @@ builder.add_conditional_edges(
     {
         "good": END,
         "retry": "rag",
+        "web": "web",
     },
 )
+
+
 
 # ----------------------------------------------------
 # Memory

@@ -2,65 +2,67 @@ from langchain_core.messages import HumanMessage
 from llm import llm
 
 
-def reflection_node(state):
-    """
-    Decide whether the answer is good enough
-    or if another retrieval attempt is needed.
-    """
+FAILURE_PHRASES = [
+    "i couldn't find",
+    "i could not find",
+    "not found",
+    "not mentioned",
+    "insufficient information",
+    "provided documentation",
+]
 
-    answer = state["answer"]
+
+def reflection_node(state):
+
+    answer = state["answer"].lower()
     question = state["question"]
-    sources = state.get("sources", [])
 
     retry_count = state.get("retry_count", 0)
     max_retries = state.get("max_retries", 2)
 
-    # ----------------------------------------
-    # Stop retrying after max attempts
-    # ----------------------------------------
-    if retry_count >= max_retries:
+    print("\n========== Reflection ==========")
+    print(f"Retry Count : {retry_count}")
 
-        print("\n========== Reflection ==========")
-        print("Maximum retries reached.")
-        print("Decision : END")
+    # ----------------------------------------------------
+    # Deterministic failure detection
+    # ----------------------------------------------------
+
+    failed = any(
+        phrase in answer
+        for phrase in FAILURE_PHRASES
+    )
+
+    if failed:
+
+        if retry_count < max_retries:
+
+            print("Decision    : retry")
+            print("================================\n")
+
+            return {
+                "reflection": "retry",
+                "retry_count": retry_count + 1,
+            }
+
+        print("Decision    : web")
         print("================================\n")
 
         return {
-            "reflection": "good"
+            "reflection": "web"
         }
 
-    # ----------------------------------------
-    # No retrieved documents
-    # ----------------------------------------
-    if len(sources) == 0:
-
-        print("\n========== Reflection ==========")
-        print("No retrieved sources.")
-        print("Decision : RETRY")
-        print("================================\n")
-
-        return {
-            "reflection": "retry",
-            "retry_count": retry_count + 1
-        }
-
-    # ----------------------------------------
-    # Ask the LLM to judge
-    # ----------------------------------------
+    # ----------------------------------------------------
+    # LLM Judge
+    # ----------------------------------------------------
 
     prompt = f"""
-You are evaluating the quality of a RAG answer.
-
 Question:
 {question}
 
 Answer:
 {answer}
 
-Number of retrieved sources:
-{len(sources)}
-
-Should the system retry retrieval?
+Is this answer sufficiently supported?
 
 Return ONLY one word.
 
@@ -78,19 +80,18 @@ retry
     decision = response.content.strip().lower()
 
     if "retry" in decision:
-        decision = "retry"
-    else:
-        decision = "good"
 
-    print("\n========== Reflection ==========")
-    print(f"Retry Count : {retry_count}")
-    print(f"Decision    : {decision}")
+        print("Decision    : retry")
+        print("================================\n")
+
+        return {
+            "reflection": "retry",
+            "retry_count": retry_count + 1,
+        }
+
+    print("Decision    : good")
     print("================================\n")
 
-    if decision == "retry":
-        retry_count += 1
-
     return {
-        "reflection": decision,
-        "retry_count": retry_count
+        "reflection": "good"
     }
