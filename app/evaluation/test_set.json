@@ -1,0 +1,77 @@
+[
+    {
+        "question": "How do I jump start my Tesla?",
+        "expected_answer": "Connect an external low voltage power supply to the jump posts under the hood, following the correct polarity (red positive cable to the red positive jump post first, then the negative cable), and wait for the touchscreen to wake up before disconnecting.",
+        "relevant_pages": [243]
+    },
+    {
+        "question": "What should I do if my car runs out of range while driving?",
+        "expected_answer": "Pull over when safe and contact Tesla Roadside Assistance or your preferred tow provider. Since the low voltage battery is no longer supported once the vehicle runs out of range, it must be jump started with an external power supply before the vehicle can charge again.",
+        "relevant_pages": [240, 243]
+    },
+    {
+        "question": "How do I check my tire pressure?",
+        "expected_answer": "On vehicles with direct TPMS, tire pressures display on the touchscreen in the car status display or under Controls > Service, showing each tire's pressure and when it was last measured; you can also view pressures in the Tesla mobile app and switch between Bar and PSI under Controls > Display.",
+        "relevant_pages": [201]
+    },
+    {
+        "question": "How do I enable Sentry Mode?",
+        "expected_answer": "Insert a properly formatted USB flash drive into the vehicle's USB port so the cameras and sensors can record; when enabled, Sentry Mode keeps the cameras powered on and monitoring for suspicious activity while the vehicle is locked and parked.",
+        "relevant_pages": [154]
+    },
+    {
+        "question": "Can I roll down the windows while Pet Mode is on?",
+        "expected_answer": "No, the windows cannot be rolled down while Pet Mode is enabled, to prevent a pet from accidentally pressing the window switch.",
+        "relevant_pages": [160]
+    },
+    {
+        "question": "When do Supercharger congestion fees apply?",
+        "expected_answer": "Congestion fees apply only when a Supercharger station is at capacity and the vehicle's battery charge level is above the congestion limit or the charging session has ended; the fees are waived for the first five minutes and then billed until the vehicle is moved.",
+        "relevant_pages": [187]
+    },
+    {
+        "question": "Does my Tesla need to be connected to Wi-Fi to get software updates?",
+        "expected_answer": "In most cases yes, the vehicle must be connected to Wi-Fi to download software updates, so Tesla recommends leaving Wi-Fi turned on and connected whenever possible for the fastest and most reliable delivery.",
+        "relevant_pages": [197]
+    },
+    {
+        "question": "What is the difference between a phone key and a key card?",
+        "expected_answer": "A phone key uses Bluetooth to detect your phone's proximity and supports automatic locking and unlocking, while a key card does not support automatic locking and unlocking and is meant as a backup for when the phone key is dead, lost, or stolen.",
+        "relevant_pages": [22]
+    },
+    {
+        "question": "What are the two general methods for installing a child safety seat?",
+        "expected_answer": "Child safety seats are either seat belt retained, secured using the vehicle's seat belts, or LATCH retained, attached to anchor bars built into the vehicle's rear seats.",
+        "relevant_pages": [44]
+    },
+    {
+        "question": "Where is the charge port located on the Model 3?",
+        "expected_answer": "The charge port is located on the left side of the vehicle, behind a door that is part of the rear tail light assembly, and can be opened by pressing the button on the Tesla charge cable while the car is in Park.",
+        "relevant_pages": [186]
+    },
+    {
+        "question": "What happens if a paired phone key is left inside the car with Bluetooth on?",
+        "expected_answer": "The vehicle may not be secure, because Model 3 will still unlock when the exterior door handle is pulled since it detects the already-connected phone key, so a locked phone key inside is effectively the same as leaving unlocked keys in the vehicle.",
+        "relevant_pages": [22]
+    },
+    {
+        "question": "What should I provide when contacting Tesla Roadside Assistance?",
+        "expected_answer": "You should provide the Vehicle Identification Number (VIN), your exact location, and a description of the problem.",
+        "relevant_pages": [239]
+    },
+    {
+        "question": "How can I tell if my Model 3 uses direct or indirect TPMS?",
+        "expected_answer": "Check Controls > Service to see which system your vehicle has; if the Model 3 visualization shows tire pressure values in PSI, the vehicle uses direct TPMS.",
+        "relevant_pages": [201]
+    },
+    {
+        "question": "Can Pet Mode be enabled if the cabin is too hot?",
+        "expected_answer": "No, Pet Mode cannot be enabled if the cabin temperature is too hot or if the vehicle detects an issue with the climate control system, so the cabin should be at a safe, comfortable level first.",
+        "relevant_pages": [161]
+    },
+    {
+        "question": "What happens to Sentry Mode sounds when Pet Mode is also active?",
+        "expected_answer": "If Pet Mode and Sentry Mode are enabled at the same time, Sentry Mode defaults to Disable Sentry Sounds to help protect the pet.",
+        "relevant_pages": [160]
+    }
+]
