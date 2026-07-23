@@ -20,12 +20,9 @@ def reflection_node(state):
     retry_count = state.get("retry_count", 0)
     max_retries = state.get("max_retries", 2)
 
-    print(f"Retry Count : {retry_count}")
-    print(f"Max Retries : {max_retries}")
-    print(f"retry_count < max_retries = {retry_count < max_retries}")
-
     print("\n========== Reflection ==========")
     print(f"Retry Count : {retry_count}")
+    print(f"Max Retries : {max_retries}")
 
     # ----------------------------------------------------
     # Deterministic failure detection
@@ -60,22 +57,22 @@ def reflection_node(state):
     # ----------------------------------------------------
 
     prompt = f"""
-            Question:
-            {question}
+Question:
+{question}
 
-            Answer:
-            {answer}
+Answer:
+{answer}
 
-            Is this answer sufficiently supported?
+Is this answer sufficiently supported by the retrieved context?
 
-            Return ONLY one word.
+Return ONLY one word:
 
-            good
+good
 
-            or
+or
 
-            retry
-            """
+retry
+"""
 
     response = llm.invoke(
         [HumanMessage(content=prompt)]
@@ -83,14 +80,27 @@ def reflection_node(state):
 
     decision = response.content.strip().lower()
 
+    # ----------------------------------------------------
+    # Respect max retries
+    # ----------------------------------------------------
+
     if "retry" in decision:
 
-        print("Decision    : retry")
+        if retry_count < max_retries:
+
+            print("Decision    : retry")
+            print("================================\n")
+
+            return {
+                "reflection": "retry",
+                "retry_count": retry_count + 1,
+            }
+
+        print("Decision    : web")
         print("================================\n")
 
         return {
-            "reflection": "retry",
-            "retry_count": retry_count + 1,
+            "reflection": "web"
         }
 
     print("Decision    : good")
