@@ -16,7 +16,7 @@ model = SentenceTransformer(
 )
 
 
-def get_embeddings(texts, batch_size=64):
+def get_embeddings(texts, batch_size=256):
     """
     Generate embeddings for a list of texts.
     """

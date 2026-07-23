@@ -17,6 +17,15 @@ from document_profiler import (
     save_profile
 )
 
+import os
+from datetime import datetime
+
+from metadata.hashUtils import calculate_file_hash
+from metadata.metadata_manager import (
+    document_changed,
+    load_metadata,
+    save_metadata,
+)
 
 def load_pdf(pdf_path):
 
@@ -66,7 +75,13 @@ def chunk_document(pages):
 
 
 def ingest(pdf_path):
+    filename = os.path.basename(pdf_path)
+    current_hash = calculate_file_hash(pdf_path)
 
+    if not document_changed(filename, current_hash):
+        print(f"{filename} has not changed. Skipping ingestion.")
+        return
+    
     print("Loading PDF...")
 
     pages = load_pdf(pdf_path)
@@ -130,3 +145,14 @@ def ingest(pdf_path):
     )
 
     print(f"\nSuccessfully stored {len(chunks)} chunks.")
+    metadata = load_metadata()
+
+    metadata[filename] = {
+        "hash": current_hash,
+        "chunks": len(chunks),
+        "last_updated": datetime.now().isoformat()
+    }
+
+    save_metadata(metadata)
+
+    print("Metadata updated.")
