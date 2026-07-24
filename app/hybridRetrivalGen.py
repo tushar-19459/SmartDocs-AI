@@ -3,16 +3,34 @@ from vector_store import HybridSearch
 from query_rewriter import rewrite_query
 from reranker import rerank
 from generator import generate_answer
+from ingest import ingest
+
+from pathlib import Path
+
+DATA_DIR = Path("../data")
+
+pdfs = list(DATA_DIR.glob("*.pdf"))
+
+if len(pdfs) == 0:
+    raise FileNotFoundError("No PDF found.")
+
+if len(pdfs) > 1:
+    raise RuntimeError(
+        f"Expected exactly one PDF, found {len(pdfs)}."
+    )
+
+ingest(str(pdfs[0]))
 
 profile_path = "../knowledge_base/customer_support_profile.json"
 
 questions = [
-    "my car is not starting",
-    "the car is overheating",
-    "Vehicle will not restart",
-    "Low voltage battery alert",
-    "Power cycling vehicle",
-    "Jump starting low voltage battery"
+    "what is the car name mention in the document",
+    # "my car is not starting",
+    # "the car is overheating",
+    # "Vehicle will not restart",
+    # "Low voltage battery alert",
+    # "Power cycling vehicle",
+    # "Jump starting low voltage battery"
 ]
 
 for question in questions:

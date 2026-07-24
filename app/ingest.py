@@ -8,13 +8,21 @@ from config import (
     CHUNK_OVERLAP
 )
 
-from embeddings import get_embedding
-
-from vector_store import add_chunks
+from embeddings import get_embeddings
+from vector_store import (
+    add_chunks,
+    reset_collection      # we'll create this
+)
 
 from document_profiler import (
     build_document_profile,
     save_profile
+)
+
+from hash import get_file_hash
+from document_state import (
+    load_state,
+    save_state
 )
 
 
@@ -26,12 +34,10 @@ def load_pdf(pdf_path):
 
     for page_num, page in enumerate(doc):
 
-        text = page.get_text()
-
         pages.append(
             {
                 "page": page_num + 1,
-                "text": text
+                "text": page.get_text()
             }
         )
 
@@ -71,15 +77,51 @@ def chunk_document(pages):
 
 def ingest(pdf_path):
 
+    print("=" * 60)
+    print("Checking document...")
+    print("=" * 60)
+
+    current_hash = get_file_hash(pdf_path)
+
+    state = load_state()
+
+    # --------------------------------------------------
+    # Skip ingestion if PDF is unchanged
+    # --------------------------------------------------
+
+    if state is not None:
+
+        if state["sha256"] == current_hash:
+
+            print("Document unchanged.")
+            print("Skipping ingestion.")
+
+            return
+
+    print("New or modified document detected.")
+    print()
+
+    # --------------------------------------------------
+    # Remove old vectors
+    # --------------------------------------------------
+
+    print("Clearing existing vector database...")
+
+    reset_collection()
+
+    # --------------------------------------------------
+    # Load PDF
+    # --------------------------------------------------
+
     print("Loading PDF...")
 
     pages = load_pdf(pdf_path)
 
     print(f"Loaded {len(pages)} pages")
 
-    # --------------------------------------
-    # Chunk the document
-    # --------------------------------------
+    # --------------------------------------------------
+    # Chunk document
+    # --------------------------------------------------
 
     print("Creating chunks...")
 
@@ -87,9 +129,9 @@ def ingest(pdf_path):
 
     print(f"Created {len(chunks)} chunks")
 
-    # --------------------------------------
-    # Build Knowledge Profile
-    # --------------------------------------
+    # --------------------------------------------------
+    # Build document profile
+    # --------------------------------------------------
 
     print("Building knowledge profile...")
 
@@ -105,42 +147,50 @@ def ingest(pdf_path):
 
     print("Knowledge profile saved.")
 
-    # --------------------------------------
-    # Generate embeddings
-    # --------------------------------------
+    # --------------------------------------------------
+    # Embeddings
+    # --------------------------------------------------
 
     print("Generating embeddings...")
 
-    ids = []
+    print("Generating embeddings...")
 
-    documents = []
+# --------------------------------------
+# Prepare data
+# --------------------------------------
 
-    embeddings = []
+    ids = [
+        str(uuid.uuid4())
+        for _ in chunks
+    ]
 
-    metadatas = []
+    documents = [
+        chunk["text"]
+        for chunk in chunks
+    ]
 
-    for chunk in chunks:
-
-        ids.append(str(uuid.uuid4()))
-
-        documents.append(chunk["text"])
-
-        embeddings.append(
-            get_embedding(chunk["text"])
-        )
-
-        metadatas.append(
-            {
-                "source": pdf_path,
-                "page": chunk["page"]
-            }
-        )
+    metadatas = [
+        {
+            "source": pdf_path,
+            "page": chunk["page"]
+        }
+        for chunk in chunks
+    ]
 
     # --------------------------------------
-    # Store in ChromaDB
+    # Generate embeddings in batches (GPU optimized)
     # --------------------------------------
 
-    print("Storing vectors in ChromaDB...")
+    embeddings = get_embeddings(
+        documents,
+        batch_size=256   # Try 512 if you have enough GPU memory
+    )
+    
+    # --------------------------------------------------
+    # Store vectors
+    # --------------------------------------------------
+
+    print("Storing vectors...")
 
     add_chunks(
         ids,
@@ -149,4 +199,15 @@ def ingest(pdf_path):
         metadatas
     )
 
-    print(f"\nSuccessfully stored {len(chunks)} chunks.")
+    # --------------------------------------------------
+    # Save new hash
+    # --------------------------------------------------
+
+    save_state(
+        pdf_path,
+        current_hash
+    )
+
+    print()
+    print(f"Stored {len(chunks)} chunks.")
+    print("Document state updated.")
