@@ -36,3 +36,7 @@ loader
 langgraph
 
 langchain-groq
+
+tavily-python
+
+langgraph

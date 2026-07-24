@@ -181,3 +181,20 @@ def HybridSearch(query, query_embedding, k=5, fetch_k=20):
     )
 
     return ranked[:k]
+
+
+def reset_collection():
+
+    global collection
+
+    try:
+        client.delete_collection(COLLECTION_NAME)
+    except:
+        pass
+
+    collection = client.get_or_create_collection(
+        name=COLLECTION_NAME,
+        metadata={
+            "description": "Customer Support Knowledge Base"
+        }
+    )
