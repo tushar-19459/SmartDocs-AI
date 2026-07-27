@@ -51,7 +51,7 @@ while True:
             "messages": [
                 HumanMessage(content=question)
             ],
-            "retry_count": 0,
+            "retry_count": 1,
             "max_retries": 2
         },
         config=config

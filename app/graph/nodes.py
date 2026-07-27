@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_groq import ChatGroq
-
+from tools.direct_web_tool import direct_web_tool
 from tools.web_tool import web_tool
 from config import GROQ_API_KEY
 from tools.rag_tool import rag_tool
@@ -48,6 +48,23 @@ def direct_node(state):
 
 def web_node(state):
 
+    result = direct_web_tool(state["question"])
+
+    answer = (
+        "[Fallback: Web Search]\n\n"
+        + result["answer"]
+    )
+
+    return {
+        "answer": answer,
+        "sources": result["sources"],
+        "search_results": result["search_results"],
+        "messages": [
+            AIMessage(content=answer)
+        ]
+    }
+
+def refelect_web_node(state):
     result = web_tool(state["question"])
 
     answer = (

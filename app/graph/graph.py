@@ -7,6 +7,7 @@ from graph.nodes import (
     rag_node,
     direct_node,
     web_node,
+    refelect_web_node
 )
 from graph.reflection import reflection_node
 
@@ -21,6 +22,7 @@ builder.add_node("router", route_question)
 builder.add_node("direct", direct_node)
 builder.add_node("rag", rag_node)
 builder.add_node("web", web_node)
+builder.add_node("refelect_web", refelect_web_node)
 builder.add_node("reflection", reflection_node)
 
 # ----------------------------------------------------
@@ -71,7 +73,7 @@ builder.add_conditional_edges(
     {
         "good": END,
         "retry": "rag",
-        "web": "web",
+        "web": "refelect_web",
     },
 )
 

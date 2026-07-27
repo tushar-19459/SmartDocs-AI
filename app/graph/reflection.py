@@ -17,7 +17,7 @@ def reflection_node(state):
     answer = state["answer"].lower()
     question = state["question"]
 
-    retry_count = state.get("retry_count", 0)
+    retry_count = state.get("retry_count", 1)
     max_retries = state.get("max_retries", 2)
 
     print("\n========== Reflection ==========")
@@ -57,22 +57,22 @@ def reflection_node(state):
     # ----------------------------------------------------
 
     prompt = f"""
-Question:
-{question}
+        Question:
+        {question}
 
-Answer:
-{answer}
+        Answer:
+        {answer}
 
-Is this answer sufficiently supported by the retrieved context?
+        Is this answer sufficiently supported by the retrieved context?
 
-Return ONLY one word:
+        Return ONLY one word:
 
-good
+        good
 
-or
+        or
 
-retry
-"""
+        retry
+        """
 
     response = llm.invoke(
         [HumanMessage(content=prompt)]
