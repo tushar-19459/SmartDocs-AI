@@ -7,43 +7,36 @@ from ingest import ingest
 
 DATA_DIR = Path("../data")
 
-config = {
-    "configurable": {
-        "thread_id": "tesla_chat"
-    }
-}
-
 
 def check_document():
-
     pdfs = list(DATA_DIR.glob("*.pdf"))
 
     if len(pdfs) == 0:
-        raise FileNotFoundError(
-            "No PDF found in ../data"
-        )
+        raise FileNotFoundError("No PDF found in ../data")
 
     if len(pdfs) > 1:
         raise RuntimeError(
             f"Expected exactly one PDF, found {len(pdfs)}."
         )
 
-    # ingest() already checks the SHA256 hash.
-    # It only rebuilds the knowledge base if needed.
+    # ingest() decides whether a rebuild is needed
     ingest(str(pdfs[0]))
 
 
-while True:
+def ask_question(question: str, thread_id: str = "tesla_chat"):
+    """
+    Ask a question to the Agentic RAG system.
+    Can be used by both the CLI and Streamlit UI.
+    """
 
-    # ----------------------------------------
-    # Check whether the PDF changed
-    # ----------------------------------------
+    # Check if the document has changed before every query
     check_document()
 
-    question = input("\nYou: ")
-
-    if question.lower() == "exit":
-        break
+    config = {
+        "configurable": {
+            "thread_id": thread_id
+        }
+    }
 
     result = graph.invoke(
         {
@@ -57,5 +50,19 @@ while True:
         config=config
     )
 
-    print("\nAssistant:\n")
-    print(result["answer"])
+    return result["answer"]
+
+
+if __name__ == "__main__":
+
+    while True:
+
+        question = input("\nYou: ")
+
+        if question.lower() == "exit":
+            break
+
+        answer = ask_question(question)
+
+        print("\nAssistant:\n")
+        print(answer)
