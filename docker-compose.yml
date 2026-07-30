@@ -1,8 +1,8 @@
-version: "3.9"
-
 services:
   smartdocs:
     build: .
+    image: agentic
+
     ports:
       - "8501:8501"
 
@@ -13,3 +13,12 @@ services:
       - ./data:/app/data
       - ./chroma_db:/app/chroma_db
       - ./knowledge_base:/app/knowledge_base
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
