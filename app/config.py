@@ -7,7 +7,8 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load app/.env
-load_dotenv(Path(__file__).resolve().parent / ".env")
+# load_dotenv(Path(__file__).resolve().parent / ".env")
+load_dotenv()
 
 CHROMA_PATH = BASE_DIR / "chroma_db"
 
@@ -19,6 +20,10 @@ EMBEDDING_MODEL1024 = "BAAI/bge-large-en-v1.5"
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
+
+print("GROQ_API_KEY exists:", os.getenv("GROQ_API_KEY") is not None)
+print("HF_TOKEN exists:", os.getenv("HF_TOKEN") is not None)
+print("TAVILY_API_KEY exists:", os.getenv("TAVILY_API_KEY") is not None)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
