@@ -1,6 +1,6 @@
 import torch
 from sentence_transformers import SentenceTransformer
-from .config import (
+from config import (
     EMBEDDING_MODEL768,
     # EMBEDDING_MODEL384,
     # EMBEDDING_MODEL1024

@@ -1,6 +1,6 @@
 import chromadb
 
-from .config import (
+from config import (
     CHROMA_PATH,
     COLLECTION_NAME
 )
